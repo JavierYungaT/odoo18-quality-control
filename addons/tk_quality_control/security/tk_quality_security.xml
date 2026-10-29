@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="module_category_tk_quality" model="ir.module.category">
+        <field name="name">Quality Control</field>
+        <field name="description">Inspections and non-conformities.</field>
+        <field name="sequence">40</field>
+    </record>
+
+    <record id="group_quality_user" model="res.groups">
+        <field name="name">User</field>
+        <field name="category_id" ref="module_category_tk_quality"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="comment">Performs inspections and manages quality alerts.</field>
+    </record>
+
+    <record id="group_quality_manager" model="res.groups">
+        <field name="name">Administrator</field>
+        <field name="category_id" ref="module_category_tk_quality"/>
+        <field name="implied_ids" eval="[(4, ref('group_quality_user'))]"/>
+        <field name="users" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
+        <field name="comment">Configures control points and stages, and can reset inspections.</field>
+    </record>
+
+    <data noupdate="1">
+        <record id="rule_tk_quality_point_company" model="ir.rule">
+            <field name="name">Quality point: multi-company</field>
+            <field name="model_id" ref="model_tk_quality_point"/>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        </record>
+        <record id="rule_tk_quality_check_company" model="ir.rule">
+            <field name="name">Quality check: multi-company</field>
+            <field name="model_id" ref="model_tk_quality_check"/>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        </record>
+        <record id="rule_tk_quality_alert_company" model="ir.rule">
+            <field name="name">Quality alert: multi-company</field>
+            <field name="model_id" ref="model_tk_quality_alert"/>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        </record>
+        <record id="rule_tk_quality_report_company" model="ir.rule">
+            <field name="name">Quality analysis: multi-company</field>
+            <field name="model_id" ref="model_tk_quality_report"/>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        </record>
+    </data>
+</odoo>

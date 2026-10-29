@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="tk_quality_report_view_pivot" model="ir.ui.view">
+        <field name="name">tk.quality.report.pivot</field>
+        <field name="model">tk.quality.report</field>
+        <field name="arch" type="xml">
+            <pivot string="Quality Analysis" sample="1">
+                <field name="supplier_id" type="row"/>
+                <field name="date" interval="month" type="col"/>
+                <field name="check_count" type="measure"/>
+                <field name="pass_rate" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="tk_quality_report_view_graph" model="ir.ui.view">
+        <field name="name">tk.quality.report.graph</field>
+        <field name="model">tk.quality.report</field>
+        <field name="arch" type="xml">
+            <graph string="Quality Analysis" type="bar" sample="1">
+                <field name="date" interval="month"/>
+                <field name="state"/>
+                <field name="check_count" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="tk_quality_report_view_list" model="ir.ui.view">
+        <field name="name">tk.quality.report.list</field>
+        <field name="model">tk.quality.report</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="date"/>
+                <field name="point_id"/>
+                <field name="product_id"/>
+                <field name="supplier_id"/>
+                <field name="picking_type_id"/>
+                <field name="inspector_id"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="tk_quality_report_view_search" model="ir.ui.view">
+        <field name="name">tk.quality.report.search</field>
+        <field name="model">tk.quality.report</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="product_id"/>
+                <field name="supplier_id"/>
+                <field name="point_id"/>
+                <filter name="failed" string="Failed" domain="[('state', '=', 'fail')]"/>
+                <filter name="date" string="Inspection Date" date="date"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_supplier" string="Vendor" context="{'group_by': 'supplier_id'}"/>
+                    <filter name="group_point" string="Control Point" context="{'group_by': 'point_id'}"/>
+                    <filter name="group_category" string="Product Category" context="{'group_by': 'product_categ_id'}"/>
+                    <filter name="group_operation" string="Operation Type" context="{'group_by': 'picking_type_id'}"/>
+                    <filter name="group_month" string="Month" context="{'group_by': 'date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_tk_quality_report" model="ir.actions.act_window">
+        <field name="name">Quality Analysis</field>
+        <field name="res_model">tk.quality.report</field>
+        <field name="view_mode">pivot,graph,list</field>
+        <field name="search_view_id" ref="tk_quality_report_view_search"/>
+    </record>
+</odoo>

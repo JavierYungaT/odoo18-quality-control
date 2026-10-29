@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="tk_quality_control.QualityDashboard">
+        <div class="o_action tk_quality_dashboard h-100 overflow-auto">
+            <div class="container-fluid py-4 px-4">
+                <div class="d-flex align-items-center mb-4">
+                    <h2 class="mb-0">Quality Overview</h2>
+                    <button class="btn btn-secondary ms-auto" t-on-click="() => this.load()"
+                            t-att-disabled="state.loading">
+                        <i class="fa fa-refresh me-1"/>Refresh
+                    </button>
+                </div>
+
+                <t t-if="state.data">
+                    <div class="row g-3 mb-4">
+                        <div t-foreach="kpis" t-as="kpi" t-key="kpi.key" class="col-12 col-sm-6 col-xl-3">
+                            <button type="button" t-att-class="'tk_kpi tk_kpi_' + kpi.tone"
+                                    t-on-click="kpi.open">
+                                <span class="tk_kpi_label" t-esc="kpi.label"/>
+                                <span class="tk_kpi_value" t-esc="kpi.value"/>
+                                <span class="tk_kpi_hint" t-esc="kpi.hint"/>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-12 col-lg-6">
+                            <section class="tk_panel">
+                                <h4>Alerts by stage</h4>
+                                <p t-if="!state.data.stages.length" class="text-muted mb-0">No quality alerts yet.</p>
+                                <button t-foreach="state.data.stages" t-as="stage" t-key="stage.id"
+                                        type="button" class="tk_bar_row" t-on-click="() => this.openStage(stage)">
+                                    <span class="tk_bar_label" t-esc="stage.name"/>
+                                    <span class="tk_bar_track">
+                                        <span t-att-class="'tk_bar_fill' + (stage.closed ? ' tk_bar_closed' : '')"
+                                              t-attf-style="width: {{ stage.count / maxStageCount * 100 }}%"/>
+                                    </span>
+                                    <span class="tk_bar_count" t-esc="stage.count"/>
+                                </button>
+                            </section>
+                        </div>
+                        <div class="col-12 col-lg-6">
+                            <section class="tk_panel">
+                                <h4>Vendors to watch</h4>
+                                <p t-if="!state.data.suppliers.length" class="text-muted mb-0">
+                                    No inspected receipts yet.
+                                </p>
+                                <table t-else="" class="table table-sm table-hover mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Vendor</th>
+                                            <th class="text-end">Checks</th>
+                                            <th class="text-end">Score</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr t-foreach="state.data.suppliers" t-as="supplier" t-key="supplier.id"
+                                            class="cursor-pointer" t-on-click="() => this.openSupplier(supplier)">
+                                            <td t-esc="supplier.name"/>
+                                            <td class="text-end" t-esc="supplier.checks"/>
+                                            <td class="text-end">
+                                                <span t-att-class="'badge ' + scoreClass(supplier.score)">
+                                                    <t t-esc="supplier.score"/> %
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </section>
+                        </div>
+                    </div>
+                </t>
+            </div>
+        </div>
+    </t>
+</templates>

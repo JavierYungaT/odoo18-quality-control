@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="tk_quality_alert_stage_view_list" model="ir.ui.view">
+        <field name="name">tk.quality.alert.stage.list</field>
+        <field name="model">tk.quality.alert.stage</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="fold"/>
+                <field name="is_closed"/>
+                <field name="description" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_tk_quality_alert_stage" model="ir.actions.act_window">
+        <field name="name">Alert Stages</field>
+        <field name="res_model">tk.quality.alert.stage</field>
+        <field name="view_mode">list</field>
+    </record>
+</odoo>

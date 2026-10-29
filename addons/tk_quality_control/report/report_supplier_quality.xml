@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_supplier_quality_document">
+        <t t-call="web.external_layout">
+            <t t-set="checks" t-value="o.sudo().tk_supplier_check_ids.filtered(lambda c: c.state != 'pending')"/>
+            <t t-set="alerts" t-value="o.env['tk.quality.alert'].search([('partner_id', '=', o.id)], limit=50)"/>
+            <div class="page">
+                <h2>Supplier Quality Report</h2>
+                <h4 t-field="o.display_name"/>
+
+                <div class="row mt-4 mb-4 text-center">
+                    <div class="col-4">
+                        <div class="text-muted">Quality Score</div>
+                        <div class="fs-2 fw-bold">
+                            <t t-if="o.supplier_quality_check_count"><span t-field="o.supplier_quality_score"/> %</t>
+                            <t t-else="">-</t>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="text-muted">Finished Checks</div>
+                        <div class="fs-2 fw-bold" t-out="o.supplier_quality_check_count"/>
+                    </div>
+                    <div class="col-4">
+                        <div class="text-muted">Quality Alerts</div>
+                        <div class="fs-2 fw-bold" t-out="len(alerts)"/>
+                    </div>
+                </div>
+
+                <h5>Latest Inspections</h5>
+                <table class="table table-sm o_main_table" t-if="checks">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Reference</th>
+                            <th>Transfer</th>
+                            <th>Product</th>
+                            <th>Control Point</th>
+                            <th>Result</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr t-foreach="checks[:50]" t-as="check">
+                            <td><span t-field="check.date_done" t-options="{'widget': 'date'}"/></td>
+                            <td><span t-field="check.name"/></td>
+                            <td t-out="check.picking_id.name or '-'"/>
+                            <td><span t-field="check.product_id"/></td>
+                            <td><span t-field="check.point_id"/></td>
+                            <td>
+                                <strong t-field="check.state"
+                                        t-attf-class="text-{{ 'success' if check.state == 'pass' else 'danger' }}"/>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p t-else="" class="text-muted">This vendor has no finished inspections yet.</p>
+
+                <t t-if="alerts">
+                    <h5 class="mt-4">Quality Alerts</h5>
+                    <table class="table table-sm o_main_table">
+                        <thead>
+                            <tr>
+                                <th>Reference</th>
+                                <th>Title</th>
+                                <th>Stage</th>
+                                <th class="text-end">Cost</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="alerts" t-as="alert">
+                                <td><span t-field="alert.name"/></td>
+                                <td><span t-field="alert.title"/></td>
+                                <td><span t-field="alert.stage_id"/></td>
+                                <td class="text-end">
+                                    <span t-field="alert.cost" t-options="{'widget': 'monetary', 'display_currency': alert.currency_id}"/>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </t>
+            </div>
+        </t>
+    </template>
+
+    <template id="report_supplier_quality">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="tk_quality_control.report_supplier_quality_document" t-lang="o.env.lang"/>
+            </t>
+        </t>
+    </template>
+</odoo>

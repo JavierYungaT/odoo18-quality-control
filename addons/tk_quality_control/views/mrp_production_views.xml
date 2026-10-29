@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="mrp_production_form_view_inherit_tk_quality" model="ir.ui.view">
+        <field name="name">mrp.production.form.inherit.tk_quality</field>
+        <field name="model">mrp.production</field>
+        <field name="inherit_id" ref="mrp.mrp_production_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_tk_view_quality_checks" type="object" class="oe_stat_button"
+                        icon="fa-check-square-o" invisible="not tk_quality_check_count">
+                    <field name="tk_quality_check_count" widget="statinfo" string="Quality Checks"/>
+                </button>
+            </xpath>
+            <xpath expr="//sheet" position="before">
+                <field name="tk_quality_state" invisible="1"/>
+                <div class="alert alert-warning mb-0 text-center" role="alert"
+                     invisible="tk_quality_state != 'pending' or state in ('done', 'cancel')">
+                    The finished product has quality checks to do before the order can be closed.
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>

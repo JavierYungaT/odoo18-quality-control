@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_quality_alert_document">
+        <t t-call="web.external_layout">
+            <div class="page">
+                <h2>Non-Conformity <span t-field="o.name"/></h2>
+                <h4 class="text-muted" t-field="o.title"/>
+
+                <table class="table table-sm mt-4">
+                    <tr>
+                        <th class="w-25">Origin</th><td><span t-field="o.origin"/></td>
+                        <th class="w-25">Stage</th><td><span t-field="o.stage_id"/></td>
+                    </tr>
+                    <tr>
+                        <th>Product</th><td><span t-field="o.product_id"/></td>
+                        <th>Lot/Serial</th><td t-out="o.lot_id.name or '-'"/>
+                    </tr>
+                    <tr>
+                        <th>Affected Quantity</th>
+                        <td><span t-field="o.quantity"/> <span t-field="o.product_uom_id"/></td>
+                        <th>Non-Conformity Cost</th>
+                        <td>
+                            <span t-field="o.cost" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Partner</th><td t-out="o.partner_id.display_name or '-'"/>
+                        <th>Responsible</th><td t-out="o.employee_id.name or '-'"/>
+                    </tr>
+                    <tr>
+                        <th>Reference Document</th>
+                        <td t-out="o.picking_id.name or o.production_id.name or o.sale_order_id.name or '-'"/>
+                        <th>Deadline</th><td t-out="o.date_deadline or '-'"/>
+                    </tr>
+                </table>
+
+                <h5 class="mt-4">Root Cause</h5>
+                <p t-if="o.cause_category"><strong>Category:</strong> <span t-field="o.cause_category"/></p>
+                <p t-if="o.root_cause" t-field="o.root_cause"/>
+                <p t-else="" class="text-muted">Pending analysis.</p>
+
+                <h5 class="mt-4">Corrective Action</h5>
+                <div t-if="not is_html_empty(o.corrective_action)" t-field="o.corrective_action"/>
+                <p t-else="" class="text-muted">Pending definition.</p>
+
+                <p t-if="o.date_closed" class="mt-4">
+                    Closed on <span t-field="o.date_closed" t-options="{'widget': 'date'}"/>.
+                </p>
+            </div>
+        </t>
+    </template>
+
+    <template id="report_quality_alert">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="tk_quality_control.report_quality_alert_document" t-lang="o.env.lang"/>
+            </t>
+        </t>
+    </template>
+</odoo>

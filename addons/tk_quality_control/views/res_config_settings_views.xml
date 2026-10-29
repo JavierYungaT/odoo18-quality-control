@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.tk_quality</field>
+        <field name="model">res.config.settings</field>
+        <field name="priority" eval="60"/>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app data-string="Quality" string="Quality" name="tk_quality_control"
+                     groups="tk_quality_control.group_quality_manager">
+                    <block title="Suppliers" name="tk_quality_suppliers">
+                        <setting string="Minimum supplier score"
+                                 help="Purchase orders warn the buyer when the vendor's quality score is below this percentage.">
+                            <field name="tk_quality_supplier_min_score" class="o_light_label"/> %
+                        </setting>
+                    </block>
+                    <block title="Control" name="tk_quality_control_config">
+                        <setting string="Control points" help="Define what to inspect in each operation.">
+                            <button name="%(tk_quality_control.action_tk_quality_point)d" type="action"
+                                    string="Control Points" class="btn-link" icon="oi-arrow-right"/>
+                        </setting>
+                        <setting string="Alert stages" help="Steps followed by non-conformities.">
+                            <button name="%(tk_quality_control.action_tk_quality_alert_stage)d" type="action"
+                                    string="Alert Stages" class="btn-link" icon="oi-arrow-right"/>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="action_tk_quality_config_settings" model="ir.actions.act_window">
+        <field name="name">Settings</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_mode">form</field>
+        <field name="target">inline</field>
+        <field name="context">{'module': 'tk_quality_control', 'bin_size': False}</field>
+    </record>
+</odoo>

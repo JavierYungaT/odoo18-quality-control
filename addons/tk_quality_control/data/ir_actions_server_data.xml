@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Bulk actions available from the "Actions" menu of the checks list. -->
+    <record id="action_server_tk_check_pass" model="ir.actions.server">
+        <field name="name">Mark as Passed</field>
+        <field name="model_id" ref="model_tk_quality_check"/>
+        <field name="binding_model_id" ref="model_tk_quality_check"/>
+        <field name="binding_view_types">list</field>
+        <field name="groups_id" eval="[(4, ref('group_quality_user'))]"/>
+        <field name="state">code</field>
+        <field name="code">records.action_pass()</field>
+    </record>
+
+    <record id="action_server_tk_check_fail" model="ir.actions.server">
+        <field name="name">Mark as Failed</field>
+        <field name="model_id" ref="model_tk_quality_check"/>
+        <field name="binding_model_id" ref="model_tk_quality_check"/>
+        <field name="binding_view_types">list</field>
+        <field name="groups_id" eval="[(4, ref('group_quality_user'))]"/>
+        <field name="state">code</field>
+        <field name="code">records.action_fail()</field>
+    </record>
+</odoo>

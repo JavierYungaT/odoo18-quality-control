@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="tk_quality_check_view_list" model="ir.ui.view">
+        <field name="name">tk.quality.check.list</field>
+        <field name="model">tk.quality.check</field>
+        <field name="arch" type="xml">
+            <list decoration-success="state == 'pass'" decoration-danger="state == 'fail'"
+                  decoration-muted="state == 'pending'" create="false" sample="1">
+                <field name="name"/>
+                <field name="point_id"/>
+                <field name="product_id"/>
+                <field name="lot_id" optional="hide"/>
+                <field name="picking_id" optional="show"/>
+                <field name="production_id" optional="show"/>
+                <field name="supplier_id" optional="show"/>
+                <field name="test_type" column_invisible="True"/>
+                <field name="measure" optional="hide" invisible="test_type != 'measure'"/>
+                <field name="inspector_id" widget="many2one_avatar_employee" optional="show"/>
+                <field name="date_done" optional="show"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+                <field name="state" widget="badge" decoration-success="state == 'pass'"
+                       decoration-danger="state == 'fail'" decoration-info="state == 'pending'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="tk_quality_check_view_form" model="ir.ui.view">
+        <field name="name">tk.quality.check.form</field>
+        <field name="model">tk.quality.check</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_pass" type="object" string="Pass" class="btn-success"
+                            invisible="state != 'pending' or test_type != 'pass_fail'"/>
+                    <button name="action_fail" type="object" string="Fail" class="btn-danger"
+                            invisible="state != 'pending' or test_type != 'pass_fail'"/>
+                    <button name="action_validate_measure" type="object" string="Validate Measure"
+                            class="btn-primary" invisible="state != 'pending' or test_type != 'measure'"/>
+                    <button name="action_create_alert" type="object" string="Create Quality Alert"
+                            class="btn-primary" invisible="state != 'fail' or alert_count"/>
+                    <button name="action_reset" type="object" string="Reset to To Do"
+                            invisible="state == 'pending'" groups="tk_quality_control.group_quality_manager"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_alerts" type="object" class="oe_stat_button"
+                                icon="fa-exclamation-triangle" invisible="not alert_count">
+                            <field name="alert_count" widget="statinfo" string="Alerts"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1><field name="name"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="point_id" readonly="state != 'pending'"/>
+                            <field name="test_type"/>
+                            <field name="product_id" readonly="state != 'pending'"/>
+                            <field name="lot_id" readonly="state != 'pending'"/>
+                            <field name="company_id" groups="base.group_multi_company" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="picking_id" invisible="not picking_id" readonly="1"/>
+                            <field name="production_id" invisible="not production_id" readonly="1"/>
+                            <field name="supplier_id" readonly="picking_id"/>
+                            <field name="inspector_id" widget="many2one_avatar_employee"
+                                   readonly="state != 'pending'"/>
+                            <field name="date_done" invisible="state == 'pending'"/>
+                        </group>
+                    </group>
+                    <group invisible="test_type != 'measure'" string="Measure">
+                        <group>
+                            <label for="measure"/>
+                            <div>
+                                <field name="measure" class="oe_inline" readonly="state != 'pending'"/>
+                                <field name="norm_unit" class="oe_inline ms-2"/>
+                            </div>
+                            <field name="norm"/>
+                            <label for="tolerance_min" string="Tolerance"/>
+                            <div>
+                                <field name="tolerance_min" class="oe_inline"/>
+                                <span class="mx-2">to</span>
+                                <field name="tolerance_max" class="oe_inline"/>
+                            </div>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Instructions" name="instructions">
+                            <field name="instructions"/>
+                        </page>
+                        <page string="Notes" name="notes">
+                            <field name="note" placeholder="Observations of the inspection..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="tk_quality_check_view_search" model="ir.ui.view">
+        <field name="name">tk.quality.check.search</field>
+        <field name="model">tk.quality.check</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="product_id"/>
+                <field name="lot_id"/>
+                <field name="point_id"/>
+                <field name="picking_id"/>
+                <field name="production_id"/>
+                <field name="supplier_id"/>
+                <filter name="pending" string="To Do" domain="[('state', '=', 'pending')]"/>
+                <filter name="done" string="Done" domain="[('state', '!=', 'pending')]"/>
+                <filter name="failed" string="Failed" domain="[('state', '=', 'fail')]"/>
+                <separator/>
+                <filter name="receipts" string="Receipts" domain="[('picking_id.picking_type_code', '=', 'incoming')]"/>
+                <filter name="manufacturing" string="Manufacturing" domain="[('production_id', '!=', False)]"/>
+                <separator/>
+                <filter name="date_done" string="Inspection Date" date="date_done"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_state" string="Result" context="{'group_by': 'state'}"/>
+                    <filter name="group_point" string="Control Point" context="{'group_by': 'point_id'}"/>
+                    <filter name="group_product" string="Product" context="{'group_by': 'product_id'}"/>
+                    <filter name="group_supplier" string="Vendor" context="{'group_by': 'supplier_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_tk_quality_check" model="ir.actions.act_window">
+        <field name="name">Quality Checks</field>
+        <field name="res_model">tk.quality.check</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="tk_quality_check_view_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No quality checks yet</p>
+            <p>Checks are created automatically when a receipt, a delivery or a
+                manufacturing order matching a control point is confirmed.</p>
+        </field>
+    </record>
+</odoo>

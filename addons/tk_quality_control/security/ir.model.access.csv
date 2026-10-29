@@ -1,0 +1,12 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_tk_quality_point_employee,tk.quality.point employee,model_tk_quality_point,base.group_user,1,0,0,0
+access_tk_quality_point_manager,tk.quality.point manager,model_tk_quality_point,group_quality_manager,1,1,1,1
+access_tk_quality_check_employee,tk.quality.check employee,model_tk_quality_check,base.group_user,1,0,0,0
+access_tk_quality_check_user,tk.quality.check user,model_tk_quality_check,group_quality_user,1,1,1,0
+access_tk_quality_check_manager,tk.quality.check manager,model_tk_quality_check,group_quality_manager,1,1,1,1
+access_tk_quality_alert_employee,tk.quality.alert employee,model_tk_quality_alert,base.group_user,1,0,0,0
+access_tk_quality_alert_user,tk.quality.alert user,model_tk_quality_alert,group_quality_user,1,1,1,0
+access_tk_quality_alert_manager,tk.quality.alert manager,model_tk_quality_alert,group_quality_manager,1,1,1,1
+access_tk_quality_alert_stage_employee,tk.quality.alert.stage employee,model_tk_quality_alert_stage,base.group_user,1,0,0,0
+access_tk_quality_alert_stage_manager,tk.quality.alert.stage manager,model_tk_quality_alert_stage,group_quality_manager,1,1,1,1
+access_tk_quality_report_user,tk.quality.report user,model_tk_quality_report,group_quality_user,1,0,0,0

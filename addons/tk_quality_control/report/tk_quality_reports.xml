@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_quality_certificate" model="ir.actions.report">
+        <field name="name">Quality Certificate</field>
+        <field name="model">stock.picking</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">tk_quality_control.report_quality_certificate</field>
+        <field name="report_file">tk_quality_control.report_quality_certificate</field>
+        <field name="print_report_name">'Quality Certificate - %s' % object.name</field>
+        <field name="binding_model_id" ref="stock.model_stock_picking"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <record id="action_report_quality_alert" model="ir.actions.report">
+        <field name="name">Non-Conformity Report</field>
+        <field name="model">tk.quality.alert</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">tk_quality_control.report_quality_alert</field>
+        <field name="report_file">tk_quality_control.report_quality_alert</field>
+        <field name="print_report_name">'Non-Conformity - %s' % object.name</field>
+        <field name="binding_model_id" ref="model_tk_quality_alert"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <record id="action_report_supplier_quality" model="ir.actions.report">
+        <field name="name">Supplier Quality Report</field>
+        <field name="model">res.partner</field>
+        <field name="report_type">qweb-html</field>
+        <field name="report_name">tk_quality_control.report_supplier_quality</field>
+        <field name="report_file">tk_quality_control.report_supplier_quality</field>
+        <field name="binding_model_id" ref="base.model_res_partner"/>
+        <field name="binding_type">report</field>
+        <field name="groups_id" eval="[(4, ref('group_quality_user'))]"/>
+    </record>
+</odoo>

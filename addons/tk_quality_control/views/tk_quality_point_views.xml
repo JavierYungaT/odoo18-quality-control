@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="tk_quality_point_view_list" model="ir.ui.view">
+        <field name="name">tk.quality.point.list</field>
+        <field name="model">tk.quality.point</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="test_type"/>
+                <field name="picking_type_ids" widget="many2many_tags"/>
+                <field name="product_ids" widget="many2many_tags" optional="show"/>
+                <field name="product_category_ids" widget="many2many_tags" optional="hide"/>
+                <field name="company_id" groups="base.group_multi_company" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="tk_quality_point_view_form" model="ir.ui.view">
+        <field name="name">tk.quality.point.form</field>
+        <field name="model">tk.quality.point</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_checks" type="object" class="oe_stat_button" icon="fa-check-square-o">
+                            <field name="check_count" widget="statinfo" string="Checks"/>
+                        </button>
+                    </div>
+                    <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger" invisible="active"/>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="e.g. Moisture content of pine boards"/></h1>
+                    </div>
+                    <group>
+                        <group string="Where">
+                            <field name="picking_type_ids" widget="many2many_tags"
+                                   options="{'no_create': True}"/>
+                            <field name="product_ids" widget="many2many_tags"/>
+                            <field name="product_category_ids" widget="many2many_tags"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                        <group string="What">
+                            <field name="test_type" widget="radio"/>
+                            <field name="norm" invisible="test_type != 'measure'"/>
+                            <label for="tolerance_min" string="Tolerance" invisible="test_type != 'measure'"/>
+                            <div invisible="test_type != 'measure'">
+                                <field name="tolerance_min" nolabel="1" class="oe_inline"/>
+                                <span class="mx-2">to</span>
+                                <field name="tolerance_max" nolabel="1" class="oe_inline"/>
+                                <field name="norm_unit" nolabel="1" class="oe_inline ms-2" placeholder="Unit"/>
+                            </div>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Instructions" name="instructions">
+                            <field name="instructions"
+                                   placeholder="Explain to the inspector how to perform the check..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="tk_quality_point_view_search" model="ir.ui.view">
+        <field name="name">tk.quality.point.search</field>
+        <field name="model">tk.quality.point</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="product_ids"/>
+                <field name="picking_type_ids"/>
+                <filter name="measure" string="Measures" domain="[('test_type', '=', 'measure')]"/>
+                <separator/>
+                <filter name="archived" string="Archived" domain="[('active', '=', False)]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_test_type" string="Test Type" context="{'group_by': 'test_type'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_tk_quality_point" model="ir.actions.act_window">
+        <field name="name">Control Points</field>
+        <field name="res_model">tk.quality.point</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Define your first control point</p>
+            <p>A control point tells Odoo what to inspect and in which operations:
+                receipts, deliveries or manufacturing orders.</p>
+        </field>
+    </record>
+</odoo>

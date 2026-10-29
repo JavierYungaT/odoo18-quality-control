@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_partner_form_inherit_tk_quality" model="ir.ui.view">
+        <field name="name">res.partner.form.inherit.tk_quality</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_tk_view_supplier_checks" type="object" class="oe_stat_button"
+                        icon="fa-check-square-o" invisible="not supplier_quality_check_count"
+                        groups="tk_quality_control.group_quality_user">
+                    <div class="o_stat_info">
+                        <span class="o_stat_value">
+                            <field name="supplier_quality_score" nolabel="1"/> %
+                        </span>
+                        <span class="o_stat_text">Quality Score</span>
+                    </div>
+                </button>
+                <button name="action_tk_view_quality_alerts" type="object" class="oe_stat_button"
+                        icon="fa-exclamation-triangle" invisible="not tk_quality_alert_count"
+                        groups="tk_quality_control.group_quality_user">
+                    <field name="tk_quality_alert_count" widget="statinfo" string="Quality Alerts"/>
+                </button>
+            </xpath>
+            <xpath expr="//sheet" position="inside">
+                <field name="supplier_quality_check_count" invisible="1"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,34 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  odoo-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start PostgreSQL
+        run: docker compose up -d --wait db
+
+      - name: Install module and run tests
+        run: |
+          docker compose run --rm odoo odoo \
+            -d ci_test \
+            -i tk_quality_control \
+            --test-enable \
+            --test-tags /tk_quality_control \
+            --stop-after-init \
+            --log-level=test 2>&1 | tee odoo.log
+          if grep -E " (ERROR|CRITICAL) ci_test " odoo.log; then
+            echo "::error::Odoo reported errors during install or tests"
+            exit 1
+          fi
+
+      - name: Stop services
+        if: always()
+        run: docker compose down -v

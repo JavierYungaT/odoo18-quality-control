@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_quality_certificate_document">
+        <t t-call="web.external_layout">
+            <t t-set="o" t-value="o.with_context(lang=lang)"/>
+            <t t-set="checks" t-value="o.sudo().tk_quality_check_ids"/>
+            <div class="page">
+                <h2>Quality Certificate <span t-field="o.name"/></h2>
+
+                <div class="row mt-4 mb-4">
+                    <div class="col-4" t-if="o.partner_id">
+                        <strong>Partner</strong>
+                        <div t-field="o.partner_id"/>
+                    </div>
+                    <div class="col-4">
+                        <strong>Operation</strong>
+                        <div t-field="o.picking_type_id"/>
+                    </div>
+                    <div class="col-4">
+                        <strong>Source Document</strong>
+                        <div t-out="o.origin or '-'"/>
+                    </div>
+                </div>
+
+                <table class="table table-sm o_main_table" t-if="checks">
+                    <thead>
+                        <tr>
+                            <th>Reference</th>
+                            <th>Product</th>
+                            <th>Control Point</th>
+                            <th class="text-end">Measure</th>
+                            <th>Result</th>
+                            <th>Inspector</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr t-foreach="checks" t-as="check">
+                            <td><span t-field="check.name"/></td>
+                            <td>
+                                <span t-field="check.product_id"/>
+                                <div t-if="check.lot_id" class="text-muted small">
+                                    Lot: <span t-field="check.lot_id"/>
+                                </div>
+                            </td>
+                            <td><span t-field="check.point_id"/></td>
+                            <td class="text-end">
+                                <t t-if="check.test_type == 'measure' and check.state != 'pending'">
+                                    <span t-field="check.measure"/> <span t-field="check.norm_unit"/>
+                                    <div class="text-muted small">
+                                        [<span t-field="check.tolerance_min"/> - <span t-field="check.tolerance_max"/>]
+                                    </div>
+                                </t>
+                            </td>
+                            <td>
+                                <strong t-field="check.state"
+                                        t-attf-class="text-{{ 'success' if check.state == 'pass' else 'danger' if check.state == 'fail' else 'muted' }}"/>
+                            </td>
+                            <td><span t-field="check.inspector_id"/></td>
+                            <td><span t-field="check.date_done" t-options="{'widget': 'date'}"/></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p t-else="">No quality checks were registered for this operation.</p>
+
+                <p t-if="checks and all(c.state == 'pass' for c in checks)" class="mt-3">
+                    All the products of this operation passed the quality inspection.
+                </p>
+
+                <div class="row mt-5 pt-5">
+                    <div class="col-5 offset-1 text-center border-top pt-2">Quality Inspector</div>
+                    <div class="col-5 offset-1 text-center border-top pt-2">Quality Manager</div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <template id="report_quality_certificate">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-set="lang" t-value="o.partner_id.lang or o.env.lang"/>
+                <t t-call="tk_quality_control.report_quality_certificate_document" t-lang="lang"/>
+            </t>
+        </t>
+    </template>
+</odoo>

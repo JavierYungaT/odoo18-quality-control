@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="tk_quality_alert_view_kanban" model="ir.ui.view">
+        <field name="name">tk.quality.alert.kanban</field>
+        <field name="model">tk.quality.alert</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="stage_id" quick_create="false" sample="1">
+                <field name="currency_id"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="d-flex">
+                            <field name="title" class="fw-bold fs-5"/>
+                            <field name="priority" widget="priority" class="ms-auto"/>
+                        </div>
+                        <field name="name" class="text-muted"/>
+                        <field name="product_id"/>
+                        <field name="origin" widget="badge"/>
+                        <field name="cost" widget="monetary" class="fw-bold"/>
+                        <footer class="pt-1">
+                            <field name="activity_ids" widget="kanban_activity"/>
+                            <field name="date_deadline" widget="remaining_days" class="ms-1"/>
+                            <field name="employee_id" widget="many2one_avatar_employee" class="ms-auto"/>
+                        </footer>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="tk_quality_alert_view_list" model="ir.ui.view">
+        <field name="name">tk.quality.alert.list</field>
+        <field name="model">tk.quality.alert</field>
+        <field name="arch" type="xml">
+            <list sample="1">
+                <field name="priority" widget="priority" optional="show"/>
+                <field name="name"/>
+                <field name="title"/>
+                <field name="origin"/>
+                <field name="product_id"/>
+                <field name="partner_id" optional="show"/>
+                <field name="employee_id" widget="many2one_avatar_employee" optional="show"/>
+                <field name="date_deadline" widget="remaining_days" optional="show"/>
+                <field name="currency_id" column_invisible="True"/>
+                <field name="cost" sum="Total Cost" optional="show"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+                <field name="stage_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="tk_quality_alert_view_form" model="ir.ui.view">
+        <field name="name">tk.quality.alert.form</field>
+        <field name="model">tk.quality.alert</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <field name="stage_id" widget="statusbar" options="{'clickable': '1'}"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name"/></h1>
+                        <h2><field name="title" placeholder="e.g. Cracked boards in the receipt"/></h2>
+                    </div>
+                    <group>
+                        <group string="Product">
+                            <field name="origin"/>
+                            <field name="product_id"/>
+                            <field name="lot_id"/>
+                            <label for="quantity"/>
+                            <div class="o_row">
+                                <field name="quantity"/>
+                                <field name="product_uom_id" groups="uom.group_uom"/>
+                            </div>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="unit_cost"/>
+                            <field name="cost"/>
+                        </group>
+                        <group string="Follow-up">
+                            <field name="employee_id" widget="many2one_avatar_employee"/>
+                            <field name="date_deadline"/>
+                            <field name="priority" widget="priority"/>
+                            <field name="partner_id"/>
+                            <field name="check_id" invisible="origin != 'inspection'"/>
+                            <field name="picking_id"/>
+                            <field name="production_id"/>
+                            <field name="sale_order_id" invisible="origin != 'customer'"/>
+                            <field name="date_closed" invisible="not date_closed"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Root Cause" name="root_cause">
+                            <group>
+                                <field name="cause_category"/>
+                                <field name="root_cause" placeholder="Why did it happen? (5 Whys)"/>
+                            </group>
+                        </page>
+                        <page string="Corrective Action" name="corrective_action">
+                            <field name="corrective_action"
+                                   placeholder="What will be done so it does not happen again..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="tk_quality_alert_view_search" model="ir.ui.view">
+        <field name="name">tk.quality.alert.search</field>
+        <field name="model">tk.quality.alert</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="title"/>
+                <field name="product_id"/>
+                <field name="partner_id"/>
+                <field name="employee_id"/>
+                <filter name="open" string="Open" domain="[('is_closed', '=', False)]"/>
+                <filter name="my_alerts" string="My Alerts" domain="[('employee_id.user_id', '=', uid)]"/>
+                <filter name="overdue" string="Overdue"
+                        domain="[('is_closed', '=', False), ('date_deadline', '&lt;', context_today().strftime('%Y-%m-%d'))]"/>
+                <separator/>
+                <filter name="inspection" string="Failed Inspections" domain="[('origin', '=', 'inspection')]"/>
+                <filter name="customer" string="Customer Complaints" domain="[('origin', '=', 'customer')]"/>
+                <filter name="internal" string="Internal Findings" domain="[('origin', '=', 'internal')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_stage" string="Stage" context="{'group_by': 'stage_id'}"/>
+                    <filter name="group_origin" string="Origin" context="{'group_by': 'origin'}"/>
+                    <filter name="group_cause" string="Cause Category" context="{'group_by': 'cause_category'}"/>
+                    <filter name="group_employee" string="Responsible" context="{'group_by': 'employee_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_tk_quality_alert" model="ir.actions.act_window">
+        <field name="name">Quality Alerts</field>
+        <field name="res_model">tk.quality.alert</field>
+        <field name="view_mode">kanban,list,form,activity</field>
+        <field name="search_view_id" ref="tk_quality_alert_view_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No quality alerts</p>
+            <p>Register non-conformities found in inspections, customer complaints
+                or internal audits, and follow them until they are solved.</p>
+        </field>
+    </record>
+</odoo>

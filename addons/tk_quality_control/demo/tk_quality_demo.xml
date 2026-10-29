@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Demo scenario: a furniture workshop that buys wood, manufactures chairs
+     and sells them. -->
+<odoo>
+    <!-- Products -->
+    <record id="product_category_wood" model="product.category">
+        <field name="name">Wood</field>
+        <field name="parent_id" ref="product.product_category_all"/>
+    </record>
+
+    <record id="product_pine_board" model="product.product">
+        <field name="name">Pine Board 2x4</field>
+        <field name="is_storable" eval="True"/>
+        <field name="categ_id" ref="product_category_wood"/>
+        <field name="standard_price">4.50</field>
+        <field name="list_price">7.00</field>
+        <field name="purchase_ok" eval="True"/>
+    </record>
+
+    <record id="product_oak_board" model="product.product">
+        <field name="name">Oak Board 1x6</field>
+        <field name="is_storable" eval="True"/>
+        <field name="categ_id" ref="product_category_wood"/>
+        <field name="standard_price">9.80</field>
+        <field name="list_price">15.00</field>
+        <field name="purchase_ok" eval="True"/>
+    </record>
+
+    <record id="product_wood_varnish" model="product.product">
+        <field name="name">Wood Varnish 1 L</field>
+        <field name="is_storable" eval="True"/>
+        <field name="standard_price">12.00</field>
+        <field name="list_price">18.00</field>
+        <field name="purchase_ok" eval="True"/>
+    </record>
+
+    <record id="product_dining_chair" model="product.product">
+        <field name="name">Oak Dining Chair</field>
+        <field name="is_storable" eval="True"/>
+        <field name="standard_price">45.00</field>
+        <field name="list_price">110.00</field>
+        <field name="sale_ok" eval="True"/>
+    </record>
+
+    <record id="bom_dining_chair" model="mrp.bom">
+        <field name="product_tmpl_id" ref="product_dining_chair_product_template"/>
+        <field name="product_qty">1</field>
+        <field name="bom_line_ids" eval="[
+            (0, 0, {'product_id': ref('product_oak_board'), 'product_qty': 3}),
+            (0, 0, {'product_id': ref('product_wood_varnish'), 'product_qty': 1}),
+        ]"/>
+    </record>
+
+    <!-- Control points -->
+    <record id="point_wood_moisture" model="tk.quality.point">
+        <field name="name">Moisture content of wood</field>
+        <field name="sequence">10</field>
+        <field name="picking_type_ids" eval="[(6, 0, [ref('stock.picking_type_in')])]"/>
+        <field name="product_category_ids" eval="[(6, 0, [ref('product_category_wood')])]"/>
+        <field name="test_type">measure</field>
+        <field name="norm">12</field>
+        <field name="tolerance_min">8</field>
+        <field name="tolerance_max">14</field>
+        <field name="norm_unit">%</field>
+        <field name="instructions"><![CDATA[
+<p>Measure three boards per package with the pin moisture meter and record the highest value.</p>
+<p>Wood above 14 % warps once the chair is assembled.</p>]]></field>
+    </record>
+
+    <record id="point_receipt_visual" model="tk.quality.point">
+        <field name="name">Visual inspection of received goods</field>
+        <field name="sequence">20</field>
+        <field name="picking_type_ids" eval="[(6, 0, [ref('stock.picking_type_in')])]"/>
+        <field name="test_type">pass_fail</field>
+        <field name="instructions"><![CDATA[
+<p>Check for cracks, knots larger than 2 cm, insects and damaged packaging.</p>]]></field>
+    </record>
+
+    <!-- The manufacturing operation type has no XML id: it is created with the warehouse. -->
+    <function model="tk.quality.point" name="create">
+        <value model="stock.warehouse" eval="{
+            'name': 'Final inspection of finished furniture',
+            'sequence': 30,
+            'picking_type_ids': [(6, 0, obj().env.ref('stock.warehouse0').manu_type_id.ids)],
+            'product_ids': [(6, 0, [ref('product_dining_chair')])],
+            'test_type': 'pass_fail',
+            'instructions': '&lt;p&gt;Sit on the chair, check that it does not wobble and that the varnish is even.&lt;/p&gt;',
+        }"/>
+    </function>
+
+    <record id="point_delivery_packaging" model="tk.quality.point">
+        <field name="name">Packaging before delivery</field>
+        <field name="sequence">40</field>
+        <field name="picking_type_ids" eval="[(6, 0, [ref('stock.picking_type_out')])]"/>
+        <field name="product_ids" eval="[(6, 0, [ref('product_dining_chair')])]"/>
+        <field name="test_type">pass_fail</field>
+    </record>
+
+    <!-- Finished checks, to feed the supplier scores, the analysis and the dashboard -->
+    <record id="check_demo_1" model="tk.quality.check">
+        <field name="point_id" ref="point_wood_moisture"/>
+        <field name="product_id" ref="product_pine_board"/>
+        <field name="supplier_id" ref="base.res_partner_1"/>
+        <field name="measure">11.5</field>
+        <field name="state">pass</field>
+        <field name="inspector_id" ref="hr.employee_qdp"/>
+        <field name="date_done" eval="(DateTime.today() - relativedelta(days=24)).strftime('%Y-%m-%d 09:00:00')"/>
+    </record>
+    <record id="check_demo_2" model="tk.quality.check">
+        <field name="point_id" ref="point_receipt_visual"/>
+        <field name="product_id" ref="product_pine_board"/>
+        <field name="supplier_id" ref="base.res_partner_1"/>
+        <field name="state">pass</field>
+        <field name="inspector_id" ref="hr.employee_qdp"/>
+        <field name="date_done" eval="(DateTime.today() - relativedelta(days=24)).strftime('%Y-%m-%d 09:10:00')"/>
+    </record>
+    <record id="check_demo_3" model="tk.quality.check">
+        <field name="point_id" ref="point_wood_moisture"/>
+        <field name="product_id" ref="product_oak_board"/>
+        <field name="supplier_id" ref="base.res_partner_1"/>
+        <field name="measure">12.8</field>
+        <field name="state">pass</field>
+        <field name="inspector_id" ref="hr.employee_al"/>
+        <field name="date_done" eval="(DateTime.today() - relativedelta(days=17)).strftime('%Y-%m-%d 10:30:00')"/>
+    </record>
+    <record id="check_demo_4" model="tk.quality.check">
+        <field name="point_id" ref="point_receipt_visual"/>
+        <field name="product_id" ref="product_oak_board"/>
+        <field name="supplier_id" ref="base.res_partner_1"/>
+        <field name="state">fail</field>
+        <field name="inspector_id" ref="hr.employee_al"/>
+        <field name="date_done" eval="(DateTime.today() - relativedelta(days=17)).strftime('%Y-%m-%d 10:40:00')"/>
+    </record>
+    <record id="check_demo_5" model="tk.quality.check">
+        <field name="point_id" ref="point_receipt_visual"/>
+        <field name="product_id" ref="product_wood_varnish"/>
+        <field name="supplier_id" ref="base.res_partner_1"/>
+        <field name="state">pass</field>
+        <field name="inspector_id" ref="hr.employee_qdp"/>
+        <field name="date_done" eval="(DateTime.today() - relativedelta(days=9)).strftime('%Y-%m-%d 08:15:00')"/>
+    </record>
+    <record id="check_demo_6" model="tk.quality.check">
+        <field name="point_id" ref="point_wood_moisture"/>
+        <field name="product_id" ref="product_pine_board"/>
+        <field name="supplier_id" ref="base.res_partner_12"/>
+        <field name="measure">16.2</field>
+        <field name="state">fail</field>
+        <field name="inspector_id" ref="hr.employee_qdp"/>
+        <field name="date_done" eval="(DateTime.today() - relativedelta(days=6)).strftime('%Y-%m-%d 11:00:00')"/>
+    </record>
+    <record id="check_demo_7" model="tk.quality.check">
+        <field name="point_id" ref="point_receipt_visual"/>
+        <field name="product_id" ref="product_pine_board"/>
+        <field name="supplier_id" ref="base.res_partner_12"/>
+        <field name="state">pass</field>
+        <field name="inspector_id" ref="hr.employee_qdp"/>
+        <field name="date_done" eval="(DateTime.today() - relativedelta(days=6)).strftime('%Y-%m-%d 11:05:00')"/>
+    </record>
+    <record id="check_demo_8" model="tk.quality.check">
+        <field name="point_id" ref="point_wood_moisture"/>
+        <field name="product_id" ref="product_oak_board"/>
+        <field name="supplier_id" ref="base.res_partner_12"/>
+        <field name="measure">15.1</field>
+        <field name="state">fail</field>
+        <field name="inspector_id" ref="hr.employee_al"/>
+        <field name="date_done" eval="(DateTime.today() - relativedelta(days=3)).strftime('%Y-%m-%d 14:20:00')"/>
+    </record>
+    <record id="check_demo_9" model="tk.quality.check">
+        <field name="point_id" ref="point_receipt_visual"/>
+        <field name="product_id" ref="product_oak_board"/>
+        <field name="supplier_id" ref="base.res_partner_3"/>
+        <field name="state">pass</field>
+        <field name="inspector_id" ref="hr.employee_al"/>
+        <field name="date_done" eval="(DateTime.today() - relativedelta(days=2)).strftime('%Y-%m-%d 09:45:00')"/>
+    </record>
+    <record id="check_demo_10" model="tk.quality.check">
+        <field name="point_id" ref="point_wood_moisture"/>
+        <field name="product_id" ref="product_oak_board"/>
+        <field name="supplier_id" ref="base.res_partner_3"/>
+        <field name="measure">10.4</field>
+        <field name="state">pass</field>
+        <field name="inspector_id" ref="hr.employee_al"/>
+        <field name="date_done" eval="(DateTime.today() - relativedelta(days=2)).strftime('%Y-%m-%d 09:50:00')"/>
+    </record>
+
+    <!-- Quality alerts -->
+    <record id="alert_demo_moisture" model="tk.quality.alert">
+        <field name="title">Pine boards above the moisture tolerance</field>
+        <field name="origin">inspection</field>
+        <field name="check_id" ref="check_demo_6"/>
+        <field name="product_id" ref="product_pine_board"/>
+        <field name="partner_id" ref="base.res_partner_12"/>
+        <field name="quantity">40</field>
+        <field name="stage_id" ref="stage_analysis"/>
+        <field name="priority">1</field>
+        <field name="employee_id" ref="hr.employee_qdp"/>
+        <field name="date_deadline" eval="(DateTime.today() + relativedelta(days=5)).strftime('%Y-%m-%d')"/>
+        <field name="cause_category">material</field>
+    </record>
+
+    <record id="alert_demo_oak_moisture" model="tk.quality.alert">
+        <field name="title">Oak boards received wet</field>
+        <field name="origin">inspection</field>
+        <field name="check_id" ref="check_demo_8"/>
+        <field name="product_id" ref="product_oak_board"/>
+        <field name="partner_id" ref="base.res_partner_12"/>
+        <field name="quantity">25</field>
+        <field name="stage_id" ref="stage_new"/>
+        <field name="employee_id" ref="hr.employee_al"/>
+        <field name="date_deadline" eval="(DateTime.today() + relativedelta(days=7)).strftime('%Y-%m-%d')"/>
+    </record>
+
+    <record id="alert_demo_chair_leg" model="tk.quality.alert">
+        <field name="title">Loose leg on a delivered dining chair</field>
+        <field name="origin">customer</field>
+        <field name="product_id" ref="product_dining_chair"/>
+        <field name="partner_id" ref="base.res_partner_4"/>
+        <field name="quantity">1</field>
+        <field name="stage_id" ref="stage_new"/>
+        <field name="priority">2</field>
+        <field name="employee_id" ref="hr.employee_admin"/>
+        <field name="date_deadline" eval="(DateTime.today() - relativedelta(days=2)).strftime('%Y-%m-%d')"/>
+    </record>
+
+    <record id="alert_demo_varnish" model="tk.quality.alert">
+        <field name="title">Uneven finish with a varnish batch</field>
+        <field name="origin">internal</field>
+        <field name="product_id" ref="product_wood_varnish"/>
+        <field name="quantity">5</field>
+        <field name="stage_id" ref="stage_action"/>
+        <field name="employee_id" ref="hr.employee_al"/>
+        <field name="cause_category">method</field>
+        <field name="root_cause">The varnish was applied below the minimum temperature of the workshop.</field>
+        <field name="date_deadline" eval="(DateTime.today() + relativedelta(days=10)).strftime('%Y-%m-%d')"/>
+    </record>
+
+    <record id="alert_demo_split_oak" model="tk.quality.alert">
+        <field name="title">Split oak boards in the receipt</field>
+        <field name="origin">inspection</field>
+        <field name="check_id" ref="check_demo_4"/>
+        <field name="product_id" ref="product_oak_board"/>
+        <field name="partner_id" ref="base.res_partner_1"/>
+        <field name="quantity">12</field>
+        <field name="stage_id" ref="stage_closed"/>
+        <field name="employee_id" ref="hr.employee_qdp"/>
+        <field name="cause_category">material</field>
+        <field name="root_cause">Boards were stored outdoors by the vendor before shipping.</field>
+        <field name="corrective_action"><![CDATA[
+<p>The vendor replaced the 12 boards and now ships them covered. Receipts from this vendor are inspected on every delivery.</p>]]></field>
+    </record>
+
+    <!-- A confirmed purchase: its receipt arrives with checks to do -->
+    <record id="purchase_order_demo_wood" model="purchase.order">
+        <field name="partner_id" ref="base.res_partner_12"/>
+        <field name="order_line" eval="[
+            (0, 0, {'product_id': ref('product_pine_board'), 'product_qty': 120, 'price_unit': 4.50}),
+            (0, 0, {'product_id': ref('product_oak_board'), 'product_qty': 60, 'price_unit': 9.80}),
+        ]"/>
+    </record>
+    <function model="purchase.order" name="button_confirm">
+        <value eval="[ref('purchase_order_demo_wood')]"/>
+    </function>
+</odoo>

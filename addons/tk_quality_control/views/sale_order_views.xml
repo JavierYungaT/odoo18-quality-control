@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_order_form_inherit_tk_quality" model="ir.ui.view">
+        <field name="name">sale.order.form.inherit.tk_quality</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_tk_report_quality_issue" type="object" string="Report Quality Issue"
+                        invisible="state != 'sale'" groups="tk_quality_control.group_quality_user"/>
+            </xpath>
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_tk_view_quality_alerts" type="object" class="oe_stat_button"
+                        icon="fa-exclamation-triangle" invisible="not tk_quality_alert_count"
+                        groups="tk_quality_control.group_quality_user">
+                    <field name="tk_quality_alert_count" widget="statinfo" string="Complaints"/>
+                </button>
+            </xpath>
+        </field>
+    </record>
+</odoo>
