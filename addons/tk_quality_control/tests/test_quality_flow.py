@@ -1,4 +1,4 @@
-from odoo.exceptions import UserError, ValidationError
+from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.tests import Form, TransactionCase, tagged
 
 
@@ -235,3 +235,78 @@ class TestQualityFlow(TransactionCase):
             "tk_quality_control.action_report_quality_alert", alert.ids
         )
         self.assertIn("Bent screws", html.decode())
+
+    def test_backorder_gets_checks(self):
+        picking = self._create_receipt(self.screw)
+        picking.tk_quality_check_ids.action_pass()
+        picking.move_ids.quantity = 4
+        picking.move_ids.picked = True
+        picking.with_context(cancel_backorder=False)._action_done()
+        backorder = picking.backorder_ids
+        self.assertTrue(backorder)
+        self.assertEqual(backorder.tk_quality_state, "pending")
+        self._set_quantities_done(backorder)
+        with self.assertRaises(UserError):
+            backorder.button_validate()
+
+    def test_inspector_is_who_records_the_result(self):
+        inspector_user = self.env["res.users"].create({
+            "name": "Inspector User",
+            "login": "tk_inspector",
+            "groups_id": [(6, 0, self.env.ref("tk_quality_control.group_quality_user").ids)],
+        })
+        inspector = self.env["hr.employee"].create({"name": "Inspector", "user_id": inspector_user.id})
+        self.env["hr.employee"].create({"name": "Buyer", "user_id": self.env.user.id})
+        picking = self._create_receipt(self.screw)
+        check = picking.tk_quality_check_ids
+        self.assertFalse(check.inspector_id)
+        check.with_user(inspector_user).action_pass()
+        self.assertEqual(check.inspector_id, inspector)
+
+    def test_reset_restricted(self):
+        user = self.env["res.users"].create({
+            "name": "Quality User",
+            "login": "tk_quality_user",
+            "groups_id": [(6, 0, self.env.ref("tk_quality_control.group_quality_user").ids)],
+        })
+        picking = self._create_receipt(self.screw)
+        check = picking.tk_quality_check_ids
+        check.action_pass()
+        with self.assertRaises(AccessError):
+            check.with_user(user).action_reset()
+
+        self._set_quantities_done(picking)
+        picking.button_validate()
+        with self.assertRaises(UserError):
+            check.action_reset()
+
+    def test_check_keeps_tolerances_of_its_inspection(self):
+        picking = self._create_receipt(self.board)
+        moisture = picking.tk_quality_check_ids.filtered(lambda c: c.point_id == self.moisture_point)
+        moisture.measure = 13
+        moisture.action_validate_measure()
+        self.moisture_point.write({"norm": 10, "tolerance_min": 9, "tolerance_max": 11})
+        self.assertEqual(moisture.tolerance_max, 14)
+        self.assertTrue(moisture.is_within_tolerance)
+        self.assertEqual(moisture.state, "pass")
+
+    def test_production_blocked_until_inspected(self):
+        manu_type = self.env.ref("stock.warehouse0").manu_type_id
+        self.env["tk.quality.point"].create({
+            "name": "Final inspection",
+            "picking_type_ids": [(6, 0, manu_type.ids)],
+            "test_type": "pass_fail",
+        })
+        form = Form(self.env["mrp.production"])
+        form.product_id = self.board
+        form.picking_type_id = manu_type
+        form.product_qty = 1
+        production = form.save()
+        production.action_confirm()
+        self.assertEqual(production.tk_quality_state, "pending")
+        production.qty_producing = 1
+        with self.assertRaises(UserError):
+            production.button_mark_done()
+        production.tk_quality_check_ids.action_pass()
+        production.button_mark_done()
+        self.assertEqual(production.state, "done")

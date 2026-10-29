@@ -1,7 +1,7 @@
 from dateutil.relativedelta import relativedelta
 
 from odoo import _, api, fields, models
-from odoo.exceptions import UserError, ValidationError
+from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.tools.misc import format_amount
 
 
@@ -25,11 +25,16 @@ class TkQualityCheck(models.Model):
         ondelete="restrict",
         check_company=True,
     )
-    test_type = fields.Selection(related="point_id.test_type")
-    norm = fields.Float(related="point_id.norm")
-    tolerance_min = fields.Float(related="point_id.tolerance_min")
-    tolerance_max = fields.Float(related="point_id.tolerance_max")
-    norm_unit = fields.Char(related="point_id.norm_unit")
+    # Copied from the point when the check is created, so that changing the
+    # point later does not rewrite the result of past inspections.
+    test_type = fields.Selection(
+        [("pass_fail", "Pass - Fail"), ("measure", "Measure")],
+        compute="_compute_point_values", store=True,
+    )
+    norm = fields.Float(compute="_compute_point_values", store=True)
+    tolerance_min = fields.Float(compute="_compute_point_values", store=True)
+    tolerance_max = fields.Float(compute="_compute_point_values", store=True)
+    norm_unit = fields.Char(compute="_compute_point_values", store=True)
     instructions = fields.Html(related="point_id.instructions")
     company_id = fields.Many2one(
         "res.company", required=True, index=True, default=lambda self: self.env.company
@@ -69,12 +74,9 @@ class TkQualityCheck(models.Model):
     )
     measure = fields.Float(tracking=True)
     is_within_tolerance = fields.Boolean(compute="_compute_is_within_tolerance")
-    inspector_id = fields.Many2one(
-        "hr.employee",
-        string="Inspector",
-        default=lambda self: self.env.user.employee_id,
-        check_company=True,
-    )
+    # No default: checks are created when the transfer is confirmed, by a user
+    # who is not the inspector. It is filled when the result is recorded.
+    inspector_id = fields.Many2one("hr.employee", string="Inspector", check_company=True)
     date_done = fields.Datetime(string="Inspection Date", readonly=True, copy=False)
     note = fields.Html()
     alert_ids = fields.One2many("tk.quality.alert", "check_id", string="Alerts")
@@ -87,6 +89,16 @@ class TkQualityCheck(models.Model):
             "A product can only be inspected once per control point in the same transfer.",
         ),
     ]
+
+    @api.depends("point_id")
+    def _compute_point_values(self):
+        for check in self:
+            point = check.point_id
+            check.test_type = point.test_type
+            check.norm = point.norm
+            check.tolerance_min = point.tolerance_min
+            check.tolerance_max = point.tolerance_max
+            check.norm_unit = point.norm_unit
 
     @api.depends("picking_id.partner_id", "picking_id.picking_type_code")
     def _compute_supplier_id(self):
@@ -167,6 +179,16 @@ class TkQualityCheck(models.Model):
             check._set_result("pass" if check.is_within_tolerance else "fail")
 
     def action_reset(self):
+        if not self.env.user.has_group("tk_quality_control.group_quality_manager"):
+            raise AccessError(_("Only quality administrators can reset inspections."))
+        closed = self.filtered(
+            lambda c: c.picking_id.state == "done" or c.production_id.state == "done"
+        )
+        if closed:
+            raise UserError(
+                _("These checks belong to a validated operation and cannot be reset: %s",
+                  ", ".join(closed.mapped("name")))
+            )
         self.write({"state": "pending", "date_done": False})
 
     def action_create_alert(self):

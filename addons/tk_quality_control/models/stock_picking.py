@@ -88,6 +88,13 @@ class StockPicking(models.Model):
         _check_quality_before_done(self, "tk_quality_check_ids")
         return super().button_validate()
 
+    def _create_backorder(self, backorder_moves=None):
+        """The moves of a backorder are already confirmed when they are moved
+        to it, so its checks have to be generated here."""
+        backorders = super()._create_backorder(backorder_moves=backorder_moves)
+        backorders._tk_generate_quality_checks()
+        return backorders
+
     def action_tk_view_quality_checks(self):
         self.ensure_one()
         action = self.env["ir.actions.act_window"]._for_xml_id(

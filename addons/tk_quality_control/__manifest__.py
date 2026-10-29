@@ -7,7 +7,7 @@ Quality control for Odoo Community: control points per operation type,
 automatic inspections that block validation, non-conformity tracking with
 cost, supplier quality score, QWeb reports and an OWL dashboard.
 """,
-    "version": "18.0.1.0.0",
+    "version": "18.0.1.1.0",
     "category": "Manufacturing/Quality",
     "author": "Javier Yunga",
     "website": "https://github.com/JavierYungaT/odoo18-quality-control",

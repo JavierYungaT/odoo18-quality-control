@@ -51,7 +51,7 @@ docker compose run --rm odoo odoo -d quality -u tk_quality_control \
   --test-enable --test-tags /tk_quality_control --stop-after-init
 ```
 
-Son 16 pruebas (`TransactionCase`, `post_install`) que cubren la generación de inspecciones desde transferencias y compras, el bloqueo de la validación, las tolerancias y restricciones, el puntaje del proveedor, la advertencia en compras, el costo y las reglas de cierre de alertas, los reclamos desde ventas, el cron de vencidas, la vista SQL, el dashboard y el renderizado de los tres reportes. GitHub Actions las corre en cada push ([.github/workflows/ci.yml](.github/workflows/ci.yml)).
+Son 21 pruebas (`TransactionCase`, `post_install`) que cubren la generación de inspecciones desde transferencias, compras y backorders, el bloqueo de la validación en recepciones y producción, los permisos para reiniciar inspecciones, la conservación de las tolerancias de cada inspección, las tolerancias y restricciones, el puntaje del proveedor, la advertencia en compras, el costo y las reglas de cierre de alertas, los reclamos desde ventas, el cron de vencidas, la vista SQL, el dashboard y el renderizado de los tres reportes. GitHub Actions las corre en cada push ([.github/workflows/ci.yml](.github/workflows/ci.yml)).
 
 ## Cómo cubre cada requisito técnico
 
